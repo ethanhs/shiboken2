@@ -1,3 +1,10 @@
+INCLUDE(CMakeForceCompiler)
+
+# override compiler check when compiling for Anddroid
+# -> on Android, the check will fail and the whole build then fails
+CMAKE_FORCE_C_COMPILER(arm-linux-androideabi-gcc GNU)
+CMAKE_FORCE_CXX_COMPILER(arm-linux-androideabi-g++ GNU)
+
 Include(icecc.cmake)
 project(shiboken2)
 
@@ -19,24 +26,26 @@ set(shiboken2_VERSION "${shiboken_MAJOR_VERSION}.${shiboken_MINOR_VERSION}.${shi
 option(BUILD_TESTS "Build tests." TRUE)
 option(USE_PYTHON_VERSION "Use specific python version to build shiboken2." "")
 
-if (USE_PYTHON_VERSION)
-    find_package(PythonLibs ${USE_PYTHON_VERSION} REQUIRED)
-    find_package(PythonInterp ${USE_PYTHON_VERSION} REQUIRED)
-else()
-    find_package(PythonLibs 2.6)
-    find_package(PythonInterp 2.6)
+if(NOT android)
+    if (USE_PYTHON_VERSION)
+        find_package(PythonLibs ${USE_PYTHON_VERSION} REQUIRED)
+        find_package(PythonInterp ${USE_PYTHON_VERSION} REQUIRED)
+    else()
+        find_package(PythonLibs 2.6)
+        find_package(PythonInterp 2.6)
+    endif()
 endif()
 
 ## For debugging the PYTHON* variables
-#message("PYTHONLIBS_FOUND: " ${PYTHONLIBS_FOUND})
-#message("PYTHON_LIBRARIES: " ${PYTHON_LIBRARIES})
-#message("PYTHON_INCLUDE_DIRS: " ${PYTHON_INCLUDE_DIRS})
-#message("PYTHON_DEBUG_LIBRARIES: " ${PYTHON_DEBUG_LIBRARIES})
-#message("PYTHONINTERP_FOUND: " ${PYTHONINTERP_FOUND})
-#message("PYTHON_EXECUTABLE: " ${PYTHON_EXECUTABLE})
-#message("PYTHON_VERSION_MAJOR: " ${PYTHON_VERSION_MAJOR})
-#message("PYTHON_VERSION_MINOR: " ${PYTHON_VERSION_MINOR})
-#message("PYTHON_VERSION_PATCH: " ${PYTHON_VERSION_PATCH})
+message("PYTHONLIBS_FOUND: " ${PYTHONLIBS_FOUND})
+message("PYTHON_LIBRARIES: " ${PYTHON_LIBRARIES})
+message("PYTHON_INCLUDE_DIRS: " ${PYTHON_INCLUDE_DIRS})
+message("PYTHON_DEBUG_LIBRARIES: " ${PYTHON_DEBUG_LIBRARIES})
+message("PYTHONINTERP_FOUND: " ${PYTHONINTERP_FOUND})
+message("PYTHON_EXECUTABLE: " ${PYTHON_EXECUTABLE})
+message("PYTHON_VERSION_MAJOR: " ${PYTHON_VERSION_MAJOR})
+message("PYTHON_VERSION_MINOR: " ${PYTHON_VERSION_MINOR})
+message("PYTHON_VERSION_PATCH: " ${PYTHON_VERSION_PATCH})
 
 if (UNIX AND NOT APPLE)
     # TODO: This part needs more testing first to be available on OSX and WIN
@@ -167,22 +176,25 @@ else()
 endif()
 
 add_subdirectory(libshiboken)
-add_subdirectory(doc)
+if(NOT android)
+    add_subdirectory(doc)
 
-# deps found, compile the generator.
-if (Qt5Core_FOUND AND PYTHONINTERP_FOUND)
-    add_subdirectory(generator)
-    add_subdirectory(shibokenmodule)
+    # deps found, compile the generator.
+    if (Qt5Core_FOUND AND PYTHONINTERP_FOUND)
+        add_subdirectory(generator)
+        add_subdirectory(shibokenmodule)
 
-    if (BUILD_TESTS)
-        enable_testing()
-        add_subdirectory(tests)
+        if (BUILD_TESTS)
+            enable_testing()
+            add_subdirectory(tests)
+        endif()
+    else()
+        message(WARNING "Some dependencies were not found, shiboken2 generator compilation disabled!")
     endif()
-else()
-    message(WARNING "Some dependencies were not found, shiboken2 generator compilation disabled!")
+
+    add_subdirectory(data)
 endif()
 
-add_subdirectory(data)
 
 # dist target
 set(ARCHIVE_NAME ${CMAKE_PROJECT_NAME}-${shiboken2_VERSION})
