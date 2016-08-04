@@ -22,8 +22,12 @@ set(shiboken_MAJOR_VERSION "2")
 set(shiboken_MINOR_VERSION "0")
 set(shiboken_MICRO_VERSION "0")
 set(shiboken2_VERSION "${shiboken_MAJOR_VERSION}.${shiboken_MINOR_VERSION}.${shiboken_MICRO_VERSION}")
+if(NOT android)
+     option(BUILD_TESTS "Build tests." TRUE)
+else()
+     option(BUILD_TESTS "Build tests." FALSE)
+endif()
 
-option(BUILD_TESTS "Build tests." TRUE)
 option(USE_PYTHON_VERSION "Use specific python version to build shiboken2." "")
 
 if(NOT android)
@@ -85,7 +89,7 @@ if (UNIX AND NOT APPLE)
   message(STATUS "PYTHON_EXTENSION_SUFFIX: ${PYTHON_EXTENSION_SUFFIX}")
 endif ()
 
-if (NOT PYTHON_SITE_PACKAGES)
+if (NOT PYTHON_SITE_PACKAGES AND NOT android)
     execute_process(
         COMMAND ${PYTHON_EXECUTABLE} -c "if True:
             from distutils import sysconfig
@@ -99,6 +103,11 @@ if (NOT PYTHON_SITE_PACKAGES)
     elseif (APPLE)
         message(STATUS "!!! The generated bindings will be installed on ${PYTHON_SITE_PACKAGES}, is it right!?")
     endif()
+endif()
+
+
+if(android)
+     set(PYTHON_SITE_PACKAGES ${CMAKE_SOURCE_DIR}/shiboken2_build_android)
 endif()
 
 if(MSVC)
