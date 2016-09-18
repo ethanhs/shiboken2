@@ -26,6 +26,10 @@ set(shiboken2_VERSION "${shiboken_MAJOR_VERSION}.${shiboken_MINOR_VERSION}.${shi
 option(BUILD_TESTS "Build tests." TRUE)
 option(USE_PYTHON_VERSION "Use specific python version to build shiboken2." "")
 
+if(android)
+     set(PYTHON_SITE_PACKAGES ${HOME}/shiboken-android-build/)
+endif()
+
 if(NOT android)
     if (USE_PYTHON_VERSION)
         find_package(PythonLibs ${USE_PYTHON_VERSION} REQUIRED)
